@@ -1,5 +1,5 @@
-#Blockchain Chain of Custody Project
-**How to test.run**
+#Blockchain Chain of Custody Project#
+**How to test/run**
 1. Navigate to `bchoc` directory
 2. `truffle init`
 3. `truffle compile`
