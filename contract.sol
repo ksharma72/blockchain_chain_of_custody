@@ -2,6 +2,10 @@
 pragma solidity ^0.8.0;
 
 contract EvidenceRegistry {
+	//event declarations
+	event EvidenceCheckedOut(uint128 id, address indexed checkedOutBy);
+	event EvidenceCheckedIn(uint128 id, address indexed checkedInBy);
+
 	enum State { CHECKEDIN, CHECKEDOUT, DISPOSED, DESTROYED, RELEASED } // State of evidence
 
 	struct Evidence {
@@ -11,7 +15,7 @@ contract EvidenceRegistry {
         	uint128 caseId;
    	 }
 
-    	uint256[] private caseIds; // Dynamic array to store caseIds
+    	uint128[] private caseIds; // Dynamic array to store caseIds
 
     	mapping(uint32 => Evidence) public evidenceMap; // Maps evidence ID to Evidence
     	mapping(uint128 => uint32[]) public caseToEvidence; // Maps caseId to an array of evidence IDs
@@ -86,4 +90,3 @@ contract EvidenceRegistry {
 	//-y reason, --why reason
 	//-o owner
 }
-
