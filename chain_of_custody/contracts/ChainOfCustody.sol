@@ -16,7 +16,6 @@ contract ChainOfCustody {
 
     Block[] public chain; // Array to store blocks
 
-    // Event to log blockchain actions
     event BlockchainAction(
         bytes12 action,
         uint32 evidenceItemId,
@@ -24,15 +23,11 @@ contract ChainOfCustody {
         bytes32 timestamp
     );
 
-    // Function to initialize the blockchain with the initial block
-    function init() public {
-        require(chain.length == 0, "Blockchain already initialized");
-
-        // Explicitly convert uint64 to bytes32 for the timestamp
-        _addBlock(bytes32(0), "INITIAL", "System", "System", "Initial block");
+    constructor() {
+        // Initializing the blockchain with the initial block
+        _addBlock(bytes32(0), bytes16(0), 0, "INITIAL", "System", "System", 0, "");
     }
 
-    // Placeholder for adding a new evidence item to the blockchain
     function add(
         bytes16 _caseId,
         uint32 _evidenceItemId,
@@ -42,71 +37,44 @@ contract ChainOfCustody {
         uint32 _dataLength,
         bytes memory _data
     ) public {
-        // Add your implementation here
-        // Call _addBlock function to add a new block to the blockchain
+        require(_caseId != bytes16(0) && _evidenceItemId != 0, "Invalid inputs");
+
+        _addBlock(
+            chain[chain.length - 1].previousHash,
+            _caseId,
+            _evidenceItemId,
+            _state,
+            _handlerName,
+            _organizationName,
+            _dataLength,
+            _data
+        );
     }
 
-    // Placeholder for checking out an evidence item
-    function checkout(uint32 _evidenceItemId) public {
-        // Add your implementation here
-        // Call _addBlock function to add a new block to the blockchain
-    }
-
-    // Placeholder for checking in an evidence item
-    function checkin(
+    function _addBlock(
+        bytes32 _previousHash,
+        bytes16 _caseId,
         uint32 _evidenceItemId,
         bytes12 _state,
         bytes20 _handlerName,
-        bytes20 _organizationName
-    ) public {
-        // Add your implementation here
-        // Call _addBlock function to add a new block to the blockchain
-    }
-
-    // Placeholder for showing cases
-    function showCases() public view returns (bytes16[] memory) {
-        // Add your implementation here
-        // Return an array of caseIds
-    }
-
-    // Placeholder for showing items for a case
-    function showItems(bytes16 _caseId) public view returns (uint32[] memory) {
-        // Add your implementation here
-        // Return an array of evidenceItemIds for the given caseId
-    }
-
-    // Placeholder for showing history for an item
-    function showHistory(
-        uint32 _evidenceItemId
-    ) public view returns (Block[] memory) {
-        // Add your implementation here
-        // Return an array of blocks for the given evidenceItemId
-    }
-
-    // Internal function to add a new block to the blockchain
-    function _addBlock(
-        bytes32 _previousHash,
-        bytes12 _state,
-        bytes20 _handlerName,
         bytes20 _organizationName,
+        uint32 _dataLength,
         bytes memory _data
     ) internal {
-        // Add a new block to the blockchain
         Block memory newBlock = Block({
             previousHash: _previousHash,
             timestamp: uint64(block.timestamp),
-            caseId: bytes16(0), // Placeholder, update as needed
-            evidenceItemId: 0, // Placeholder, update as needed
+            caseId: _caseId,
+            evidenceItemId: _evidenceItemId,
             state: _state,
             handlerName: _handlerName,
             organizationName: _organizationName,
-            dataLength: uint32(_data.length),
+            dataLength: _dataLength,
             data: _data
         });
 
         chain.push(newBlock);
 
-        // Emit an event to log the blockchain action
         emit BlockchainAction(
             _state,
             newBlock.evidenceItemId,
