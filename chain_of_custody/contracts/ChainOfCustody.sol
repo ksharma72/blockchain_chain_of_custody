@@ -25,30 +25,63 @@ contract ChainOfCustody {
 
     constructor() {
         // Initializing the blockchain with the initial block
-        _addBlock(bytes32(0), bytes16(0), 0, "INITIAL", "System", "System", 0, "");
+        _addBlock(
+            bytes32(0),
+            bytes16(0),
+            0,
+            "INITIAL",
+            "System",
+            "System",
+            0,
+            ""
+        );
     }
 
     function add(
-        bytes16 _caseId,
-        uint32 _evidenceItemId,
+        bytes16[] memory _caseIds,
+        uint32[] memory _evidenceItemIds,
         bytes12 _state,
         bytes20 _handlerName,
         bytes20 _organizationName,
         uint32 _dataLength,
         bytes memory _data
     ) public {
-        require(_caseId != bytes16(0) && _evidenceItemId != 0, "Invalid inputs");
-
-        _addBlock(
-            chain[chain.length - 1].previousHash,
-            _caseId,
-            _evidenceItemId,
-            _state,
-            _handlerName,
-            _organizationName,
-            _dataLength,
-            _data
+        require(_state == "CHECKEDIN", "State must be CHECKEDIN");
+        require(
+            _caseIds.length == _evidenceItemIds.length,
+            "Array lengths do not match"
         );
+
+        for (uint i = 0; i < _caseIds.length; i++) {
+            require(_caseIds[i] != bytes16(0), "Invalid case ID");
+            require(_evidenceItemIds[i] != 0, "Invalid evidence item ID");
+            require(
+                !isEvidenceItemIdUsed(_evidenceItemIds[i]),
+                "Evidence item ID already exists"
+            );
+
+            _addBlock(
+                chain[chain.length - 1].previousHash,
+                _caseIds[i],
+                _evidenceItemIds[i],
+                _state,
+                _handlerName,
+                _organizationName,
+                _dataLength,
+                _data
+            );
+        }
+    }
+
+    function isEvidenceItemIdUsed(
+        uint32 _evidenceItemId
+    ) internal view returns (bool) {
+        for (uint i = 0; i < chain.length; i++) {
+            if (chain[i].evidenceItemId == _evidenceItemId) {
+                return true;
+            }
+        }
+        return false;
     }
 
     function _addBlock(
