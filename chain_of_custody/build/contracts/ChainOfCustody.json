@@ -9574,14 +9574,46 @@
   },
   "networks": {
     "5777": {
-      "events": {},
+      "events": {
+        "0xdb0e49512042cd0e8e1128c236760c5ed80651d504ab98ed337ec91743bc2e1f": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "bytes12",
+              "name": "action",
+              "type": "bytes12"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint32",
+              "name": "evidenceItemId",
+              "type": "uint32"
+            },
+            {
+              "indexed": false,
+              "internalType": "bytes16",
+              "name": "caseId",
+              "type": "bytes16"
+            },
+            {
+              "indexed": false,
+              "internalType": "bytes32",
+              "name": "timestamp",
+              "type": "bytes32"
+            }
+          ],
+          "name": "BlockchainAction",
+          "type": "event"
+        }
+      },
       "links": {},
-      "address": "0xF35b7e8dC7167208CEF7FA66a2b7bB554b1103b9",
-      "transactionHash": "0xcdc659e3ccbbc4b15c13277eb3cbca8263cd204ee292f7a96c62c66f09b390c7"
+      "address": "0x2B791Bc8aef89E376935d6f7CAA5A8ee705D22D6",
+      "transactionHash": "0x10b94de3635c8275c4d2c94e4033329ed688ed4b8708114666961055f343c256"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2023-11-15T02:23:16.003Z",
+  "updatedAt": "2023-11-15T02:28:38.819Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",
