@@ -11,5 +11,5 @@ async function showItemsForCase(caseId) {
         console.error("Error fetching items for case:", error);
     }
 }
-
+const caseId = process.argv[2];
 showItemsForCase(caseId);
