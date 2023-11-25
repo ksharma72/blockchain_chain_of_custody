@@ -327,4 +327,46 @@ contract ChainOfCustody {
             _ownerInfo
         );
     }
+    function verify() public view returns (uint, string memory) {
+        uint transactionCount = blockchain.length;
+
+        if(transactionCount == 0) {
+            return (0, "EMPTY");
+        }
+
+        for (uint i = 1; i < transactionCount; i++) {
+            // Check proper linking of blocks
+            if(blockchain[i].previousHash != calculateHash(blockchain[i-1])) {
+                string memory errorMessage = string(abi.encodePacked("ERROR: Broken chain at block ", uintToString(i)));
+            }
+            // possibly add more checks
+        }
+
+        return (transactionCount, "CLEAN");
+    }
+
+    function uintToString(uint _i) internal pure returns (string memory) {
+        if (_i == 0) {
+            return "0";
+        }
+        uint j = _i;
+        uint length;
+        while (j != 0) {
+            length++;
+            j /= 10;
+        }
+        bytes memory bstr = new bytes(length);
+        uint k = length;
+        while (_i != 0) {
+            k = k-1;
+            uint8 temp = (48 + uint8(_i - _i / 10 * 10));
+            bytes1 b1 = bytes1(temp);
+            bstr[k] = b1;
+            _i /= 10;
+        }
+        return string(bstr);
+    }
+    function calculateHash(Block memory block) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(block.previousHash, block.timestamp, block.caseId, block.evidenceItemId, block.state, block.handlerName, block.organizationName, block.dataLength, block.data));
+    }
 }
