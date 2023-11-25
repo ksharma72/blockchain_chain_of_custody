@@ -7,9 +7,10 @@ contract ChainOfCustody {
         uint64 timestamp;
         uint128 caseId;
         uint32 evidenceItemId;
-        bytes12 state;
+        string state;
         string handlerName; // Changed from bytes20 to string
         string organizationName; // Changed from bytes20 to string
+        string reason;
         uint32 dataLength;
         bytes data;
     }
@@ -18,19 +19,52 @@ contract ChainOfCustody {
     mapping(uint32 => bool) public evidenceExists;
 
     // Updated event to use strings
-    event EvidenceItemAdded(uint128 caseId, uint32 evidenceItemId, uint64 timestamp, bytes12 state, string handlerName, string organizationName);
+    event EvidenceItemAdded(
+        uint128 caseId,
+        uint32 evidenceItemId,
+        uint64 timestamp,
+        string state,
+        string handlerName,
+        string organizationName
+    );
 
     // Updated function to accept string parameters
-    function addEvidenceItems(uint128 _caseId, uint32[] memory _itemIds, string memory _handlerName, string memory _organizationName) public {
+    function addEvidenceItems(
+        uint128 _caseId,
+        uint32[] memory _itemIds,
+        string memory _handlerName,
+        string memory _organizationName
+    ) public {
         for (uint i = 0; i < _itemIds.length; i++) {
-            require(!evidenceExists[_itemIds[i]], "Evidence item ID must be unique");
-            addBlock(_caseId, _itemIds[i], "CHECKEDIN", _handlerName, _organizationName, "");
+            require(
+                !evidenceExists[_itemIds[i]],
+                "Evidence item ID must be unique"
+            );
+            addBlock(
+                _caseId,
+                _itemIds[i],
+                "CHECKEDIN",
+                _handlerName,
+                _organizationName,
+                "",
+                ""
+            );
         }
     }
 
     // Updated function to accept string parameters
-    function addBlock(uint128 _caseId, uint32 _evidenceItemId, bytes12 _state, string memory _handlerName, string memory _organizationName, bytes memory _data) private {
-        bytes32 previousHash = blockchain.length > 0 ? getLatestBlockHash() : bytes32(0);
+    function addBlock(
+        uint128 _caseId,
+        uint32 _evidenceItemId,
+        string memory _state,
+        string memory _handlerName,
+        string memory _organizationName,
+        string memory _reason,
+        bytes memory _data
+    ) private {
+        bytes32 previousHash = blockchain.length > 0
+            ? getLatestBlockHash()
+            : bytes32(0);
         uint64 timestamp = uint64(block.timestamp);
         uint32 dataLength = uint32(_data.length);
 
@@ -42,6 +76,7 @@ contract ChainOfCustody {
             _state,
             _handlerName,
             _organizationName,
+            _reason,
             dataLength,
             _data
         );
@@ -49,7 +84,14 @@ contract ChainOfCustody {
         blockchain.push(newBlock);
         evidenceExists[_evidenceItemId] = true;
 
-        emit EvidenceItemAdded(_caseId, _evidenceItemId, timestamp, _state, _handlerName, _organizationName);
+        emit EvidenceItemAdded(
+            _caseId,
+            _evidenceItemId,
+            timestamp,
+            _state,
+            _handlerName,
+            _organizationName
+        );
     }
 
     function getLatestBlockHash() private view returns (bytes32) {
@@ -88,7 +130,8 @@ contract ChainOfCustody {
             "Error: Wrong evidence item."
         );
         require(
-            lastBlock.state != "CHECKEDOUT",
+            keccak256(abi.encodePacked(lastBlock.state)) !=
+                keccak256(abi.encodePacked("CHECKEDOUT")),
             "Error: Cannot check out a checked out item. Must check it in first."
         );
 
@@ -99,6 +142,7 @@ contract ChainOfCustody {
             "CHECKEDOUT",
             lastBlock.handlerName,
             lastBlock.organizationName,
+            "",
             lastBlock.data
         );
         emit EvidenceItemCheckedOut(
@@ -114,14 +158,15 @@ contract ChainOfCustody {
         uint32 evidenceItemId,
         uint64 timestamp,
         bytes12 state,
-        bytes20 handlerName,
-        bytes20 organizationName
+        string handlerName,
+        string organizationName
     );
 
     function checkinEvidenceItem(
         uint32 _evidenceItemId,
-        bytes20 _handlerName,
-        bytes20 _organizationName
+        string memory _handlerName,
+        string memory _organizationName,
+        string memory _reason
     ) public {
         require(
             evidenceExists[_evidenceItemId],
@@ -131,9 +176,9 @@ contract ChainOfCustody {
         // Check if the item is not already checked in
         Block storage lastBlock = blockchain[blockchain.length - 1];
         require(
-            lastBlock.evidenceItemId == _evidenceItemId &&
-                lastBlock.state != "CHECKEDIN",
-            "Error: Item already checked in or not the last transaction."
+            keccak256(abi.encodePacked(lastBlock.state)) !=
+                keccak256(abi.encodePacked("CHECKEDIN")),
+            "Error: Cannot check out a checked out item. Must check it in first."
         );
 
         // Add a new block for checkin
@@ -143,6 +188,7 @@ contract ChainOfCustody {
             "CHECKEDIN",
             _handlerName,
             _organizationName,
+            _reason,
             lastBlock.data
         );
         emit EvidenceItemCheckedIn(
@@ -203,13 +249,16 @@ contract ChainOfCustody {
 
         return items;
     }
+
     struct BlockInfo {
         uint64 timestamp;
-        bytes20 handlerName;
-        bytes12 state;
+        string handlerName;
+        string state;
     }
 
-    function getItemHistory(uint32 _itemId) public view returns (BlockInfo[] memory) {
+    function getItemHistory(
+        uint32 _itemId
+    ) public view returns (BlockInfo[] memory) {
         BlockInfo[] memory history = new BlockInfo[](blockchain.length);
         uint count = 0;
 
@@ -231,5 +280,51 @@ contract ChainOfCustody {
         }
 
         return itemHistory;
+    }
+
+    event EvidenceItemRemoved(
+        uint128 caseId,
+        uint32 evidenceItemId,
+        uint64 timestamp,
+        string reason,
+        string ownerInfo
+    );
+
+    function removeEvidenceItem(
+        uint32 _evidenceItemId,
+        string memory _reason,
+        string memory _ownerInfo
+    ) public {
+        require(
+            evidenceExists[_evidenceItemId],
+            "Error: Evidence item does not exist."
+        );
+
+        Block storage lastBlock = blockchain[blockchain.length - 1];
+        require(
+            lastBlock.evidenceItemId == _evidenceItemId &&
+                keccak256(abi.encodePacked(lastBlock.state)) ==
+                keccak256(abi.encodePacked("CHECKEDIN")),
+            "Error: Item must be checked in to be removed."
+        );
+
+        // Assuming 'addBlock' function updates the state and creates a new block in the blockchain
+        addBlock(
+            lastBlock.caseId,
+            _evidenceItemId,
+            _reason, // Include _reason in the call
+            lastBlock.handlerName,
+            lastBlock.organizationName,
+            _ownerInfo, // Include _ownerInfo
+            lastBlock.data
+        );
+
+        emit EvidenceItemRemoved(
+            lastBlock.caseId,
+            _evidenceItemId,
+            uint64(block.timestamp),
+            _reason,
+            _ownerInfo
+        );
     }
 }
