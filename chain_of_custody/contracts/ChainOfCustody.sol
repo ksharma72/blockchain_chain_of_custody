@@ -1,7 +1,7 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 contract ChainOfCustody {
-    // Define a struct to represent a block in the blockchain
     struct Block {
         bytes32 previousHash;
         uint64 timestamp;
@@ -14,48 +14,59 @@ contract ChainOfCustody {
         bytes data;
     }
 
-    // Array to store blocks
-    Block[] public blocks;
+    Block[] public blockchain;
+    mapping(uint32 => bool) public evidenceExists;
 
-    // Event for emitting transaction details
-    event AddedItem(uint indexed itemId, uint indexed caseId, bytes12 status, uint timestamp);
+    // Event declaration
+    event EvidenceItemAdded(uint128 caseId, uint32 evidenceItemId, uint64 timestamp, bytes12 state);
 
-    // Function to add a new evidence item
-    function addItem(
-        uint caseId,
-        uint itemId,
-        bytes20 itemHandlerName, // Fixed size for handler name
-        bytes20 itemOrganizationName, // Fixed size for organization name
-        uint32 itemDataLength, // Length of the data
-        bytes calldata itemData // Variable length data
-    ) public {
-        // Create a new block with provided data
-        Block memory newBlock;
-        newBlock.previousHash = blocks.length > 0 ? blocks[blocks.length - 1].previousHash : bytes32(0); // Use 0 for initial block
-        newBlock.timestamp = uint64(block.timestamp);
-        newBlock.caseId = uint128(caseId);
-        newBlock.evidenceItemId = uint32(itemId);
-        newBlock.state = bytes12("CHECKEDIN");
-
-        // Set handlerName and organizationName
-        newBlock.handlerName = itemHandlerName;
-        newBlock.organizationName = itemOrganizationName;
-
-        // Set data and dataLength
-        newBlock.data = itemData;
-        newBlock.dataLength = itemDataLength;
-
-        // Add the new block to the blockchain
-        blocks.push(newBlock);
-
-        // Emit an event for the action
-        emit AddedItem(itemId, caseId, newBlock.state, block.timestamp);
+    function addEvidenceItems(uint128 _caseId, uint32[] memory _itemIds) public {
+        for (uint i = 0; i < _itemIds.length; i++) {
+            require(!evidenceExists[_itemIds[i]], "Evidence item ID must be unique");
+            addBlock(_caseId, _itemIds[i], "CHECKEDIN", "", "", "");
+        }
     }
 
-    // Other functions for checkout, checkin, show cases, etc.
+    function addBlock(uint128 _caseId, uint32 _evidenceItemId, bytes12 _state, bytes20 _handlerName, bytes20 _organizationName, bytes memory _data) private {
+        bytes32 previousHash = blockchain.length > 0 ? getLatestBlockHash() : bytes32(0);
+        uint64 timestamp = uint64(block.timestamp);
+        uint32 dataLength = uint32(_data.length);
 
-    // Constructor to initialize the contract
-    constructor() {
-        // Initialize any variables or settings here
+        Block memory newBlock = Block(
+            previousHash,
+            timestamp,
+            _caseId,
+            _evidenceItemId,
+            _state,
+            _handlerName,
+            _organizationName,
+            dataLength,
+            _data
+        );
+
+        blockchain.push(newBlock);
+        evidenceExists[_evidenceItemId] = true;
+
+        // Emitting the event
+        emit EvidenceItemAdded(_caseId, _evidenceItemId, timestamp, _state);
     }
+
+    function getLatestBlockHash() private view returns (bytes32) {
+        Block storage lastBlock = blockchain[blockchain.length - 1];
+        return keccak256(
+            abi.encodePacked(
+                lastBlock.previousHash,
+                lastBlock.timestamp,
+                lastBlock.caseId,
+                lastBlock.evidenceItemId,
+                lastBlock.state,
+                lastBlock.handlerName,
+                lastBlock.organizationName,
+                lastBlock.dataLength,
+                lastBlock.data
+            )
+        );
+    }
+
+    // Additional functions and logic to be added as per project requirements
 }
