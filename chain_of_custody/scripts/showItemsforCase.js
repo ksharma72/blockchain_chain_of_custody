@@ -12,6 +12,4 @@ async function showItemsForCase(caseId) {
     }
 }
 
-// Example usage
-let caseId = 12345; // Replace with your case ID
 showItemsForCase(caseId);
