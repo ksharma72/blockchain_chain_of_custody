@@ -11,6 +11,4 @@ async function showCases() {
         console.error("Error fetching cases:", error);
     }
 }
-
-// Example usage
 showCases();

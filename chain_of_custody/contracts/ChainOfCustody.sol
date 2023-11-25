@@ -200,4 +200,55 @@ contract ChainOfCustody {
 
         return uniqueCases;
     }
+
+    function getItemsForCase(
+        uint128 _caseId
+    ) public view returns (uint32[] memory) {
+        uint32[] memory itemsTemp = new uint32[](blockchain.length);
+        uint count = 0;
+
+        for (uint i = 0; i < blockchain.length; i++) {
+            if (blockchain[i].caseId == _caseId) {
+                itemsTemp[count] = blockchain[i].evidenceItemId;
+                count++;
+            }
+        }
+
+        // Resize the array to fit the actual number of items for the case
+        uint32[] memory items = new uint32[](count);
+        for (uint i = 0; i < count; i++) {
+            items[i] = itemsTemp[i];
+        }
+
+        return items;
+    }
+    struct BlockInfo {
+        uint64 timestamp;
+        bytes20 handlerName;
+        bytes12 state;
+    }
+
+    function getItemHistory(uint32 _itemId) public view returns (BlockInfo[] memory) {
+        BlockInfo[] memory history = new BlockInfo[](blockchain.length);
+        uint count = 0;
+
+        for (uint i = 0; i < blockchain.length; i++) {
+            if (blockchain[i].evidenceItemId == _itemId) {
+                history[count] = BlockInfo(
+                    blockchain[i].timestamp,
+                    blockchain[i].handlerName,
+                    blockchain[i].state
+                );
+                count++;
+            }
+        }
+
+        // Resize the array to fit the actual number of entries for the item
+        BlockInfo[] memory itemHistory = new BlockInfo[](count);
+        for (uint i = 0; i < count; i++) {
+            itemHistory[i] = history[i];
+        }
+
+        return itemHistory;
+    }
 }
