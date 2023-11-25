@@ -68,5 +68,16 @@ contract ChainOfCustody {
         );
     }
 
-    // Additional functions and logic to be added as per project requirements
+    event EvidenceItemCheckedOut(uint128 caseId, uint32 evidenceItemId, uint64 timestamp, bytes12 state);
+
+    function checkoutEvidenceItem(uint32 _evidenceItemId) public {
+        require(evidenceExists[_evidenceItemId], "Error: Evidence item does not exist.");
+        Block storage lastBlock = blockchain[blockchain.length - 1];
+        require(lastBlock.evidenceItemId == _evidenceItemId, "Error: Wrong evidence item.");
+        require(lastBlock.state != "CHECKEDOUT", "Error: Cannot check out a checked out item. Must check it in first.");
+
+        // Assuming 'addBlock' function updates the state and creates a new block in the blockchain
+        addBlock(lastBlock.caseId, _evidenceItemId, "CHECKEDOUT", lastBlock.handlerName, lastBlock.organizationName, lastBlock.data);
+        emit EvidenceItemCheckedOut(lastBlock.caseId, _evidenceItemId, uint64(block.timestamp), "CHECKEDOUT");
+    }
 }
