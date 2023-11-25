@@ -24,6 +24,7 @@ async function checkoutEvidenceItem(evidenceItemId) {
     } catch (error) {
         console.error('Error during checkout:', error.message);
     }
+    
 }
 
 // Example usage
