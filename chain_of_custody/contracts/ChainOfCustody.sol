@@ -266,36 +266,38 @@ contract ChainOfCustody {
     }
 
     struct BlockInfo {
-        uint64 timestamp;
-        string handlerName;
-        string state;
+    uint128 caseId;
+    uint32 evidenceItemId;
+    uint64 timestamp;
+    string state;
+    string handlerName;
+}
+
+function getItemHistory(uint32 _itemId) public view returns (BlockInfo[] memory) {
+    BlockInfo[] memory history = new BlockInfo[](blockchain.length);
+    uint count = 0;
+
+    for (uint i = 0; i < blockchain.length; i++) {
+        if (blockchain[i].evidenceItemId == _itemId) {
+            history[count] = BlockInfo(
+                blockchain[i].caseId,
+                blockchain[i].evidenceItemId,
+                blockchain[i].timestamp,
+                blockchain[i].state,
+                blockchain[i].handlerName
+            );
+            count++;
+        }
     }
 
-    function getItemHistory(
-        uint32 _itemId
-    ) public view returns (BlockInfo[] memory) {
-        BlockInfo[] memory history = new BlockInfo[](blockchain.length);
-        uint count = 0;
-
-        for (uint i = 0; i < blockchain.length; i++) {
-            if (blockchain[i].evidenceItemId == _itemId) {
-                history[count] = BlockInfo(
-                    blockchain[i].timestamp,
-                    blockchain[i].handlerName,
-                    blockchain[i].state
-                );
-                count++;
-            }
-        }
-
-        // Resize the array to fit the actual number of entries for the item
-        BlockInfo[] memory itemHistory = new BlockInfo[](count);
-        for (uint i = 0; i < count; i++) {
-            itemHistory[i] = history[i];
-        }
-
-        return itemHistory;
+    BlockInfo[] memory itemHistory = new BlockInfo[](count);
+    for (uint i = 0; i < count; i++) {
+        itemHistory[i] = history[i];
     }
+
+    return itemHistory;
+}
+
 
     event EvidenceItemRemoved(
         uint128 caseId,

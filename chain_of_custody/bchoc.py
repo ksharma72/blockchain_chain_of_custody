@@ -73,6 +73,21 @@ def show_cases():
         sys.exit(e.returncode)
 
 
+def show_item_history(item_id):
+    """
+    Calls the getItemHistory.js script to show history of an evidence item.
+    """
+    try:
+        result = subprocess.run(
+            ["node", f"{SCRIPTS_PATH}/getItemHistory.js", item_id],
+            capture_output=True, text=True, check=True
+        )
+        print(result.stdout)
+    except subprocess.CalledProcessError as e:
+        print(f"Error fetching item history: {e.stderr}", file=sys.stderr)
+        sys.exit(e.returncode)
+
+
 
 # Argument parser setup
 parser = argparse.ArgumentParser(description="Blockchain Chain of Custody Management Tool")
@@ -99,11 +114,19 @@ checkin_parser.add_argument('-o', '--organization', required=True, help='Organiz
 
 
 # Show command parser
-show_parser = subparsers.add_parser('show', help='Show data from the blockchain')
-show_subparsers = show_parser.add_subparsers(dest='show_command')
+show_parser = subparsers.add_parser('show', help='Show details (cases or history)')
+show_subparsers = show_parser.add_subparsers(dest="show_command")
 
-# Show Cases sub-command parser
+# Show cases subcommand
 show_cases_parser = show_subparsers.add_parser('cases', help='Show all cases')
+show_cases_parser.set_defaults(func=show_cases)
+
+# Show history subcommand
+show_history_parser = show_subparsers.add_parser('history', help='Show history of an evidence item')
+show_history_parser.add_argument('-i', '--item_id', required=True, help='Item ID')
+show_history_parser.set_defaults(func=lambda args: show_item_history(args.item_id))
+
+
 
 def main():
     args = parser.parse_args()
@@ -114,12 +137,18 @@ def main():
         checkout_evidence_item(args.item_id, args.handler, args.organization)
     elif args.command == 'checkin':
         checkin_evidence_item(args.item_id, args.handler, args.organization)
-    if args.command == 'show':
-        if args.show_command == 'cases':
-            show_cases()
+    elif args.command == 'show':
+        if hasattr(args, 'show_command'):
+            if args.show_command == 'cases':
+                show_cases()
+            elif args.show_command == 'history':
+                show_item_history(args.item_id)
+            else:
+                print("Invalid show command")
         else:
-            print("Invalid show command")
-            sys.exit(1)
+            print("Please specify a show subcommand (cases or history)")
+    else:
+        parser.print_help()
     # ... handle other commands
 
 if __name__ == '__main__':
