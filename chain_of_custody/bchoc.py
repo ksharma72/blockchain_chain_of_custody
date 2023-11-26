@@ -12,14 +12,15 @@ def add_evidence(case_id, item_ids, handler, organization):
     """
     try:
         item_ids_str = ",".join(item_ids)  # Convert list of item IDs to a comma-separated string
-        result = subprocess.run(
-            ["node", f"{SCRIPTS_PATH}/addEvidenceItem.js", case_id, item_ids_str, handler, organization],
-            capture_output=True, text=True, check=True
-        )
+        command = ["node", f"{SCRIPTS_PATH}/addEvidenceItem.js", case_id, item_ids_str, handler, organization]
+        #print("Executing command:", ' '.join(command))  # Debug: print the command
+        result = subprocess.run(command, capture_output=True, text=True, check=True, bufsize=1)
         print(result.stdout)
+        #print("Standard Error:", result.stderr)  # Print stderr regardless of error
     except subprocess.CalledProcessError as e:
         print(f"Error during adding evidence: {e.stderr}", file=sys.stderr)
         sys.exit(e.returncode)
+
 
 def checkout_evidence_item(item_id, handler, organization):
     """

@@ -161,7 +161,7 @@ contract ChainOfCustody {
         uint128 caseId,
         uint32 evidenceItemId,
         uint64 timestamp,
-        bytes12 state,
+        string state,
         string handlerName,
         string organizationName
     );

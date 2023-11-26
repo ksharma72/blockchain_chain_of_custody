@@ -21,51 +21,48 @@ const web3 = new Web3("http://127.0.0.1:7545");
 const contract = new web3.eth.Contract(contractABI.abi, contractAddress);
 
 async function addEvidenceItems(caseId, itemIds, handler, organization) {
-  const accounts = await web3.eth.getAccounts();
-  const account = accounts[0]; // Using the first account for transactions
-
-  try {
-    let result = await contract.methods
-      .addEvidenceItems(caseId, itemIds, handler, organization)
-      .send({
-        from: account,
-        gas: 5000000, // Setting a higher gas limit
-      });
-
-    let receipt = await web3.eth.getTransactionReceipt(result.transactionHash);
-
-    if (receipt && receipt.logs) {
-      receipt.logs.forEach((log) => {
-        // Decode the event only if it's 'EvidenceItemAdded'
-        if (
-          log.topics[0] ===
-          web3.utils.sha3("EvidenceItemAdded(uint128,uint32,uint64,string)")
-        ) {
-          let event = web3.eth.abi.decodeLog(
-            [
-              { type: "uint128", name: "caseId", indexed: true },
-              { type: "uint32", name: "evidenceItemId", indexed: true },
-              { type: "uint64", name: "timestamp" },
-              { type: "string", name: "state" }, // Changed to string
-            ],
-            log.data,
-            log.topics.slice(1)
-          );
-
-          console.log("Case:", event.caseId);
-          console.log("Added item:", event.evidenceItemId);
-          console.log("Status:", event.state); // No need to convert from hex
-          console.log(
-            "Time of action:",
-            new Date(event.timestamp * 1000).toISOString()
-          );
-        }
-      });
+    //console.log("Attempting to add evidence items..."); // Debugging
+    const accounts = await web3.eth.getAccounts();
+    const account = accounts[0]; // Using the first account for transactions
+  
+    try {
+      //console.log("Sending transaction..."); // Debugging
+      let result = await contract.methods
+        .addEvidenceItems(caseId, itemIds, handler, organization)
+        .send({ from: account, gas: 5000000 });
+  
+      //console.log("Transaction sent, getting receipt..."); // Debugging
+      let receipt = await web3.eth.getTransactionReceipt(result.transactionHash);
+  
+      if (receipt && receipt.logs) {
+        //console.log("Decoding logs..."); // Debugging
+        receipt.logs.forEach((log) => {
+            // Decode only if it's the 'EvidenceItemAdded' event
+            if (log.topics[0] === web3.utils.sha3('EvidenceItemAdded(uint128,uint32,uint64,string,string,string)')) {
+                let decodedLog = web3.eth.abi.decodeLog([
+                    { indexed: false, name: 'caseId', type: 'uint128' },
+                    { indexed: false, name: 'evidenceItemId', type: 'uint32' },
+                    { indexed: false, name: 'timestamp', type: 'uint64' },
+                    { indexed: false, name: 'state', type: 'string' },
+                    { indexed: false, name: 'handlerName', type: 'string' },
+                    { indexed: false, name: 'organizationName', type: 'string' }
+                ], log.data);
+        
+                console.log(`Case: ${decodedLog.caseId}`);
+                console.log(`Added item: ${decodedLog.evidenceItemId}`);
+                console.log(`Status: ${decodedLog.state}`);
+                console.log(`Time of action: ${new Date(decodedLog.timestamp * 1000).toISOString()}`);
+            }
+        });
+        
+      } else {
+        console.log("No logs in transaction receipt."); // Debugging
+      }
+    } catch (error) {
+      console.error("Error adding evidence items:", error.message);
     }
-  } catch (error) {
-    console.error("Error adding evidence items:", error.message);
   }
-}
+  
 
 // Accepting command line arguments
 const caseId = process.argv[2];
