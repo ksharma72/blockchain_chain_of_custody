@@ -20,8 +20,8 @@ contract ChainOfCustody {
 
     // Updated event to use strings
     event EvidenceItemAdded(
-        uint128 caseId,
-        uint32 evidenceItemId,
+        uint128 indexed caseId,
+        uint32 indexed evidenceItemId,
         uint64 timestamp,
         string state,
         string handlerName,

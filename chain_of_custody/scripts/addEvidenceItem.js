@@ -40,13 +40,13 @@ async function addEvidenceItems(caseId, itemIds, handler, organization) {
             // Decode only if it's the 'EvidenceItemAdded' event
             if (log.topics[0] === web3.utils.sha3('EvidenceItemAdded(uint128,uint32,uint64,string,string,string)')) {
                 let decodedLog = web3.eth.abi.decodeLog([
-                    { indexed: false, name: 'caseId', type: 'uint128' },
-                    { indexed: false, name: 'evidenceItemId', type: 'uint32' },
+                    { indexed: true, name: 'caseId', type: 'uint128' },
+                    { indexed: true, name: 'evidenceItemId', type: 'uint32' },
                     { indexed: false, name: 'timestamp', type: 'uint64' },
                     { indexed: false, name: 'state', type: 'string' },
                     { indexed: false, name: 'handlerName', type: 'string' },
                     { indexed: false, name: 'organizationName', type: 'string' }
-                ], log.data);
+                ], log.data,log.topics.slice(1));
         
                 console.log(`Case: ${decodedLog.caseId}`);
                 console.log(`Added item: ${decodedLog.evidenceItemId}`);
