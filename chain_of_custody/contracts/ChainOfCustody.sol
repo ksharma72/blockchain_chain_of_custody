@@ -115,11 +115,13 @@ contract ChainOfCustody {
     event EvidenceItemCheckedOut(
         uint128 caseId,
         uint32 evidenceItemId,
+        string handlerName,
+        string organizationName,
         uint64 timestamp,
-        bytes12 state
+        string state
     );
 
-    function checkoutEvidenceItem(uint32 _evidenceItemId) public {
+    function checkoutEvidenceItem(uint32 _evidenceItemId, string memory _handlerName, string memory _organizationName) public {
         require(
             evidenceExists[_evidenceItemId],
             "Error: Evidence item does not exist."
@@ -148,6 +150,8 @@ contract ChainOfCustody {
         emit EvidenceItemCheckedOut(
             lastBlock.caseId,
             _evidenceItemId,
+            _handlerName,
+            _organizationName,
             uint64(block.timestamp),
             "CHECKEDOUT"
         );
