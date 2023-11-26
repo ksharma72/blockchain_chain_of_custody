@@ -27,9 +27,10 @@ def checkout_evidence_item(item_id, handler, organization):
     """
     try:
         result = subprocess.run(
-            ["node", f"{SCRIPTS_PATH}/checkoutEvidenceItem.js", item_id, handler, organization],
+            ["node", f"{SCRIPTS_PATH}/checkoutItem.js", item_id, handler, organization],
             capture_output=True, text=True, check=True
         )
+        print(result)
         print(result.stdout)
     except subprocess.CalledProcessError as e:
         print(f"Error during checkout: {e.stderr}", file=sys.stderr)
@@ -43,13 +44,13 @@ subparsers = parser.add_subparsers(dest="command")
 add_parser = subparsers.add_parser('add', help='Add an evidence item to a case')
 add_parser.add_argument('-c', '--case_id', required=True, help='Case ID')
 add_parser.add_argument('-i', '--item_id', action='append', required=True, help='Item ID')
-add_parser.add_argument('-H', '--handler', required=True, help='Handler')
+add_parser.add_argument('-H', '--handler', required=True, help='Handler')  # Changed to -H
 add_parser.add_argument('-o', '--organization', required=True, help='Organization')
 
 # Checkout command parser
 checkout_parser = subparsers.add_parser('checkout', help='Checkout an evidence item')
 checkout_parser.add_argument('-i', '--item_id', required=True, help='Item ID')
-checkout_parser.add_argument('-H', '--handler', required=True, help='Handler')
+checkout_parser.add_argument('-H', '--handler', required=True, help='Handler')  # Changed to -H
 checkout_parser.add_argument('-o', '--organization', required=True, help='Organization')
 
 def main():

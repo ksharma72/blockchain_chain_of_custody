@@ -165,8 +165,8 @@ contract ChainOfCustody {
     function checkinEvidenceItem(
         uint32 _evidenceItemId,
         string memory _handlerName,
-        string memory _organizationName,
-        string memory _reason
+        string memory _organizationName
+        
     ) public {
         require(
             evidenceExists[_evidenceItemId],
@@ -188,7 +188,7 @@ contract ChainOfCustody {
             "CHECKEDIN",
             _handlerName,
             _organizationName,
-            _reason,
+            "",
             lastBlock.data
         );
         emit EvidenceItemCheckedIn(
