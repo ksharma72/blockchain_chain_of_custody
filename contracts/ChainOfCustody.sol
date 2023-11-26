@@ -327,46 +327,30 @@ contract ChainOfCustody {
             _ownerInfo
         );
     }
-    function verify() public view returns (uint, string memory) {
-        uint transactionCount = blockchain.length;
-
-        if(transactionCount == 0) {
-            return (0, "EMPTY");
-        }
-
-        for (uint i = 1; i < transactionCount; i++) {
-            // Check proper linking of blocks
-            if(blockchain[i].previousHash != calculateHash(blockchain[i-1])) {
-                string memory errorMessage = string(abi.encodePacked("ERROR: Broken chain at block ", uintToString(i)));
-            }
-            // possibly add more checks
-        }
-
-        return (transactionCount, "CLEAN");
+    // Part of verify: fetches the entire blockchain
+    function getBlockchain() public view returns (Block[] memory) {
+        return blockchain;
     }
 
-    function uintToString(uint _i) internal pure returns (string memory) {
-        if (_i == 0) {
-            return "0";
-        }
-        uint j = _i;
-        uint length;
-        while (j != 0) {
-            length++;
-            j /= 10;
-        }
-        bytes memory bstr = new bytes(length);
-        uint k = length;
-        while (_i != 0) {
-            k = k-1;
-            uint8 temp = (48 + uint8(_i - _i / 10 * 10));
-            bytes1 b1 = bytes1(temp);
-            bstr[k] = b1;
-            _i /= 10;
-        }
-        return string(bstr);
+    // Part of verify: fetches an individual block by index
+    function getBlock(uint index) public view returns (Block memory) {
+        require(index < blockchain.length, "Index out of bounds");
+        return blockchain[index];
     }
-    function calculateHash(Block memory block) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(block.previousHash, block.timestamp, block.caseId, block.evidenceItemId, block.state, block.handlerName, block.organizationName, block.dataLength, block.data));
+
+    function init(uint32 _evidenceItemId) public view returns (bool) {
+    // Check if the blockchain is empty
+    if (blockchain.length == 0) {
+        return false;
     }
+
+    // Find a block from evidence ID
+    for (uint i = 0; i < blockchain.length; i++) {
+        if (blockchain[i].evidenceItemId == _evidenceItemId) {
+            // Initial block has a previous hash of 0
+            return blockchain[i].previousHash == bytes32(0);
+        }
+    }
+    return false;
+}
 }
