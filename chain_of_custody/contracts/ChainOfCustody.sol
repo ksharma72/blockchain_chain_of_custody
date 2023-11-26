@@ -158,8 +158,8 @@ contract ChainOfCustody {
     }
 
     event EvidenceItemCheckedIn(
-        uint128 caseId,
-        uint32 evidenceItemId,
+        uint128 indexed caseId,
+        uint32 indexed evidenceItemId,
         uint64 timestamp,
         string state,
         string handlerName,
@@ -167,43 +167,54 @@ contract ChainOfCustody {
     );
 
     function checkinEvidenceItem(
-        uint32 _evidenceItemId,
-        string memory _handlerName,
-        string memory _organizationName
-        
-    ) public {
-        require(
-            evidenceExists[_evidenceItemId],
-            "Error: Evidence item does not exist."
-        );
+    uint32 _evidenceItemId,
+    string memory _handlerName,
+    string memory _organizationName
+) public {
+    require(
+        evidenceExists[_evidenceItemId],
+        "Error: Evidence item does not exist."
+    );
 
-        // Check if the item is not already checked in
-        Block storage lastBlock = blockchain[blockchain.length - 1];
-        require(
-            keccak256(abi.encodePacked(lastBlock.state)) !=
-                keccak256(abi.encodePacked("CHECKEDIN")),
-            "Error: Cannot check out a checked out item. Must check it in first."
-        );
+    bool isItemCheckedOut = false;
+    uint128 caseIdForItem;
 
-        // Add a new block for checkin
-        addBlock(
-            lastBlock.caseId,
-            _evidenceItemId,
-            "CHECKEDIN",
-            _handlerName,
-            _organizationName,
-            "",
-            lastBlock.data
-        );
-        emit EvidenceItemCheckedIn(
-            lastBlock.caseId,
-            _evidenceItemId,
-            uint64(block.timestamp),
-            "CHECKEDIN",
-            _handlerName,
-            _organizationName
-        );
+    // Iterate through the blockchain to find the specific block with the evidence item
+    for (uint i = blockchain.length; i > 0; i--) {
+        Block storage blockItem = blockchain[i - 1];
+        if (blockItem.evidenceItemId == _evidenceItemId) {
+            // Check if the item is in a checked out state
+            if (keccak256(abi.encodePacked(blockItem.state)) == keccak256(abi.encodePacked("CHECKEDOUT"))) {
+                isItemCheckedOut = true;
+                caseIdForItem = blockItem.caseId;
+                break;
+            }
+        }
     }
+
+    require(isItemCheckedOut, "Error: Item is not checked out.");
+
+    // Add a new block for checkin
+    addBlock(
+        caseIdForItem,
+        _evidenceItemId,
+        "CHECKEDIN",
+        _handlerName,
+        _organizationName,
+        "",
+        ""
+    );
+
+    emit EvidenceItemCheckedIn(
+        caseIdForItem,
+        _evidenceItemId,
+        uint64(block.timestamp),
+        "CHECKEDIN",
+        _handlerName,
+        _organizationName
+    );
+}
+
 
     function getCases() public view returns (uint128[] memory) {
         uint128[] memory cases = new uint128[](blockchain.length);

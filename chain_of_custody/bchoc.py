@@ -40,6 +40,25 @@ def checkout_evidence_item(item_id, handler, organization):
         sys.exit(e.returncode)
 
 
+def checkin_evidence_item(item_id, handler, organization):
+    """
+    Calls the checkinEvidenceItem.js script to check in an evidence item in the blockchain.
+    """
+    try:
+        result = subprocess.run(
+            ["node", f"{SCRIPTS_PATH}/checkinItem.js", item_id, handler, organization],
+            capture_output=True, text=True, check=True
+        )
+        if result.stdout:
+            print(result.stdout)  # Only print standard output if it's not empty
+        if result.stderr:
+            print(f"Error during check-in: {result.stderr}", file=sys.stderr)  # Print standard error if it's not empty
+    except subprocess.CalledProcessError as e:
+        print(f"Error during check-in: {e.stderr}", file=sys.stderr)
+        sys.exit(e.returncode)
+
+
+
 # Argument parser setup
 parser = argparse.ArgumentParser(description="Blockchain Chain of Custody Management Tool")
 subparsers = parser.add_subparsers(dest="command")
@@ -57,6 +76,13 @@ checkout_parser.add_argument('-i', '--item_id', required=True, help='Item ID')
 checkout_parser.add_argument('-H', '--handler', required=True, help='Handler')  # Changed to -H
 checkout_parser.add_argument('-o', '--organization', required=True, help='Organization')
 
+# Checkin command parser
+checkin_parser = subparsers.add_parser('checkin', help='Check in an evidence item')
+checkin_parser.add_argument('-i', '--item_id', required=True, help='Item ID')
+checkin_parser.add_argument('-H', '--handler', required=True, help='Handler')  # Note the -H
+checkin_parser.add_argument('-o', '--organization', required=True, help='Organization')
+
+
 def main():
     args = parser.parse_args()
 
@@ -64,6 +90,8 @@ def main():
         add_evidence(args.case_id, args.item_id, args.handler, args.organization)
     elif args.command == 'checkout':
         checkout_evidence_item(args.item_id, args.handler, args.organization)
+    elif args.command == 'checkin':
+        checkin_evidence_item(args.item_id, args.handler, args.organization)
     # ... handle other commands
 
 if __name__ == '__main__':
