@@ -58,6 +58,21 @@ def checkin_evidence_item(item_id, handler, organization):
         sys.exit(e.returncode)
 
 
+def show_cases():
+    """
+    Calls the getCases.js script to show all cases from the blockchain.
+    """
+    try:
+        result = subprocess.run(
+            ["node", f"{SCRIPTS_PATH}/getCases.js"],
+            capture_output=True, text=True, check=True
+        )
+        print(result.stdout)
+    except subprocess.CalledProcessError as e:
+        print(f"Error fetching cases: {e.stderr}", file=sys.stderr)
+        sys.exit(e.returncode)
+
+
 
 # Argument parser setup
 parser = argparse.ArgumentParser(description="Blockchain Chain of Custody Management Tool")
@@ -83,6 +98,13 @@ checkin_parser.add_argument('-H', '--handler', required=True, help='Handler')  #
 checkin_parser.add_argument('-o', '--organization', required=True, help='Organization')
 
 
+# Show command parser
+show_parser = subparsers.add_parser('show', help='Show data from the blockchain')
+show_subparsers = show_parser.add_subparsers(dest='show_command')
+
+# Show Cases sub-command parser
+show_cases_parser = show_subparsers.add_parser('cases', help='Show all cases')
+
 def main():
     args = parser.parse_args()
 
@@ -92,6 +114,12 @@ def main():
         checkout_evidence_item(args.item_id, args.handler, args.organization)
     elif args.command == 'checkin':
         checkin_evidence_item(args.item_id, args.handler, args.organization)
+    if args.command == 'show':
+        if args.show_command == 'cases':
+            show_cases()
+        else:
+            print("Invalid show command")
+            sys.exit(1)
     # ... handle other commands
 
 if __name__ == '__main__':
