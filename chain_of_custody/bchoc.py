@@ -31,11 +31,14 @@ def checkout_evidence_item(item_id, handler, organization):
             ["node", f"{SCRIPTS_PATH}/checkoutItem.js", item_id, handler, organization],
             capture_output=True, text=True, check=True
         )
-        print(result)
-        print(result.stdout)
+        if result.stdout:
+            print(result.stdout)  # Only print standard output if it's not empty
+        if result.stderr:
+            print(f"Error during checkout: {result.stderr}", file=sys.stderr)  # Print standard error if it's not empty
     except subprocess.CalledProcessError as e:
         print(f"Error during checkout: {e.stderr}", file=sys.stderr)
         sys.exit(e.returncode)
+
 
 # Argument parser setup
 parser = argparse.ArgumentParser(description="Blockchain Chain of Custody Management Tool")

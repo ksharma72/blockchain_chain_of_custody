@@ -23,43 +23,37 @@ async function checkoutEvidenceItem(evidenceItemId, handler, organization) {
   const account = accounts[0];
 
   try {
-    let result = await contract.methods
-      .checkoutEvidenceItem(evidenceItemId, handler, organization)
-      .send({
-        from: account,
-        gas: 5000000,
-      });
-    let receipt = await web3.eth.getTransactionReceipt(result.transactionHash);
+      let result = await contract.methods.checkoutEvidenceItem(evidenceItemId, handler, organization).send({ from: account, gas: 5000000 });
+      let receipt = await web3.eth.getTransactionReceipt(result.transactionHash);
 
-    if (receipt && receipt.logs) {
-      receipt.logs.forEach((log) => {
-        let event = web3.eth.abi.decodeLog(
-          [
-            { type: "uint128", name: "caseId", indexed: true },
-            { type: "uint32", name: "evidenceItemId", indexed: true },
-            { type: "string", name: "handler" },
-            { type: "string", name: "organization" },
-            { type: "uint64", name: "timestamp" },
-            { type: "string", name: "state" },
-          ],
-          log.data,
-          log.topics.slice(1)
-        );
+      if (receipt && receipt.logs) {
+          const eventSignature = web3.utils.sha3('EvidenceItemCheckedOut(uint128,uint32,string,string,uint64,string)');
 
-        console.log(`Checked out item: ${evidenceItemId}`);
-        console.log(`Case ID: ${event.caseId}`);
-        console.log(`Handler: ${event.handler}`);
-        console.log(`Organization: ${event.organization}`);
-        console.log(`Status: ${event.state}`);
-        console.log(
-          `Time of action: ${new Date(event.timestamp * 1000).toISOString()}`
-        );
-      });
-    }
+          receipt.logs.forEach((log) => {
+              if (log.topics[0] === eventSignature) {
+                  let event = web3.eth.abi.decodeLog([
+                      { indexed: true, name: 'caseId', type: 'uint128' },
+                      { indexed: true, name: 'evidenceItemId', type: 'uint32' },
+                      { indexed: false, name: 'handlerName', type: 'string' },
+                      { indexed: false, name: 'organizationName', type: 'string' },
+                      { indexed: false, name: 'timestamp', type: 'uint64' },
+                      { indexed: false, name: 'state', type: 'string' }
+                  ], log.data, log.topics.slice(1));
+
+                  console.log(`Checked out item: ${evidenceItemId}`);
+                  console.log(`Case ID: ${event.caseId}`);
+                  //console.log(`Handler: ${event.handlerName}`);
+                  //console.log(`Organization: ${event.organizationName}`);
+                  console.log(`Status: ${event.state}`);
+                  console.log(`Time of action: ${new Date(event.timestamp * 1000).toISOString()}`);
+              }
+          });
+      }
   } catch (error) {
-    console.error("Error during checkout:", error.message);
+      console.error("Error during checkout:", error.message);
   }
 }
+
 
 const evidenceItemId = process.argv[2]; // Accept evidence item ID from command line
 const handler = process.argv[3]; // Accept evidence item ID from command line

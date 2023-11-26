@@ -113,8 +113,8 @@ contract ChainOfCustody {
     }
 
     event EvidenceItemCheckedOut(
-        uint128 caseId,
-        uint32 evidenceItemId,
+        uint128 indexed caseId,
+        uint32 indexed evidenceItemId,
         string handlerName,
         string organizationName,
         uint64 timestamp,
