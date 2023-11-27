@@ -41,6 +41,7 @@ async function removeEvidenceItem(itemId, reason, ownerInfo) {
                 receipt.logs[0].topics.slice(1)
             );
 
+            console.log(`Case: ${removedEvent.caseId}`);
             console.log(`Removed item: ${itemId}`);
             console.log(`Status: ${removedEvent.reason}`);
             console.log(`Owner info: ${removedEvent.ownerInfo}`);

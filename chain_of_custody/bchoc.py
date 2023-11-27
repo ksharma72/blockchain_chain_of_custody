@@ -88,6 +88,35 @@ def show_item_history(item_id):
         sys.exit(e.returncode)
 
 
+def remove_evidence(item_id, reason, owner_info):
+    """
+    Calls the removeEvidenceItem.js script to remove an evidence item from the blockchain.
+    """
+    try:
+        command = ["node", f"{SCRIPTS_PATH}/removeEvidenceItem.js", item_id, reason, owner_info]
+        result = subprocess.run(command, capture_output=True, text=True, check=True, bufsize=1)
+        print(result.stdout)
+    except subprocess.CalledProcessError as e:
+        print(f"Error during removing evidence item: {e.stderr}", file=sys.stderr)
+        sys.exit(e.returncode)
+
+def show_items(case_id):
+    """
+    Calls the showItemsForCase.js script to show item IDs for a given case from the blockchain.
+    """
+    try:
+        result = subprocess.run(
+            ["node", f"{SCRIPTS_PATH}/showItemsForCase.js", case_id],
+            capture_output=True, text=True, check=True
+        )
+        if result.stdout:
+            print(result.stdout)  # Only print standard output if it's not empty
+        if result.stderr:
+            print(f"Error during show items: {result.stderr}", file=sys.stderr)  # Print standard error if it's not empty
+    except subprocess.CalledProcessError as e:
+        print(f"Error during show items: {e.stderr}", file=sys.stderr)
+        sys.exit(e.returncode)
+
 
 # Argument parser setup
 parser = argparse.ArgumentParser(description="Blockchain Chain of Custody Management Tool")
@@ -127,6 +156,17 @@ show_history_parser.add_argument('-i', '--item_id', required=True, help='Item ID
 show_history_parser.set_defaults(func=lambda args: show_item_history(args.item_id))
 
 
+# Remove command parser
+remove_parser = subparsers.add_parser('remove', help='Remove an evidence item from a case')
+remove_parser.add_argument('-i', '--item_id', required=True, help='Item ID')
+remove_parser.add_argument('-r', '--reason', required=True, help='Reason for removal')
+remove_parser.add_argument('-o', '--owner_info', required=True, help='Owner information')
+
+# Add command parser for 'show items'
+show_items_parser = subparsers.add_parser('items', help='Show item IDs for a given case')
+show_items_parser.add_argument('-c', '--case_id', required=True, help='Case ID')
+show_items_parser.set_defaults(func=lambda args: show_items(args.case_id))
+
 
 def main():
     args = parser.parse_args()
@@ -137,18 +177,20 @@ def main():
         checkout_evidence_item(args.item_id, args.handler, args.organization)
     elif args.command == 'checkin':
         checkin_evidence_item(args.item_id, args.handler, args.organization)
+    elif args.command == 'remove':
+        remove_evidence(args.item_id, args.reason, args.owner_info)
     elif args.command == 'show':
         if hasattr(args, 'show_command'):
             if args.show_command == 'cases':
                 show_cases()
             elif args.show_command == 'history':
                 show_item_history(args.item_id)
+            elif args.show_command == 'items':
+                show_items(args.case_id)
             else:
                 print("Invalid show command")
         else:
-            print("Please specify a show subcommand (cases or history)")
-    else:
-        parser.print_help()
+            print("Please specify a show subcommand (cases, history, or items)")
     # ... handle other commands
 
 if __name__ == '__main__':
