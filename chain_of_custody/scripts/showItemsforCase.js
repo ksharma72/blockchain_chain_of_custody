@@ -19,7 +19,7 @@ const contract = new web3.eth.Contract(contractABI.abi, contractAddress);
 async function showItemsForCase(caseId) {
     try {
         let itemIds = await contract.methods.getItemsForCase(caseId).call();
-        console.log(`Items for case ${caseId}:`);
+        //console.log(`Items for case ${caseId}:`);
         itemIds.forEach(itemId => {
             console.log(itemId.toString()); // Display each item ID
         });
