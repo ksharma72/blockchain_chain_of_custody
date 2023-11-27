@@ -106,7 +106,7 @@ def show_items(case_id):
     """
     try:
         result = subprocess.run(
-            ["node", f"{SCRIPTS_PATH}/showItemsForCase.js", case_id],
+            ["node", f"{SCRIPTS_PATH}/showItemsforCase.js", case_id],
             capture_output=True, text=True, check=True
         )
         if result.stdout:
@@ -155,6 +155,11 @@ show_history_parser = show_subparsers.add_parser('history', help='Show history o
 show_history_parser.add_argument('-i', '--item_id', required=True, help='Item ID')
 show_history_parser.set_defaults(func=lambda args: show_item_history(args.item_id))
 
+# Add command parser for 'show items'
+show_items_parser = show_subparsers.add_parser('items', help='Show item IDs for a given case')
+show_items_parser.add_argument('-c', '--case_id', required=True, dest='case_id', help='Case ID')
+show_items_parser.set_defaults(func=lambda args: show_items(args.case_id))
+
 
 # Remove command parser
 remove_parser = subparsers.add_parser('remove', help='Remove an evidence item from a case')
@@ -162,10 +167,8 @@ remove_parser.add_argument('-i', '--item_id', required=True, help='Item ID')
 remove_parser.add_argument('-r', '--reason', required=True, help='Reason for removal')
 remove_parser.add_argument('-o', '--owner_info', required=True, help='Owner information')
 
-# Add command parser for 'show items'
-show_items_parser = subparsers.add_parser('items', help='Show item IDs for a given case')
-show_items_parser.add_argument('-c', '--case_id', required=True, help='Case ID')
-show_items_parser.set_defaults(func=lambda args: show_items(args.case_id))
+
+
 
 
 def main():
