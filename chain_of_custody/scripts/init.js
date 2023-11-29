@@ -5,7 +5,7 @@ const Web3 = require('web3');
 const ChainOfCustodyArtifact = require('../build/contracts/ChainOfCustody.json'); // Adjust the path accordingly
 
 const ChainOfCustody = Contract(ChainOfCustodyArtifact);
-const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545')); // Update with your Ethereum node URL
+const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545')); // Update with your Ethereum node URL
 
 ChainOfCustody.setProvider(web3.currentProvider);
 
