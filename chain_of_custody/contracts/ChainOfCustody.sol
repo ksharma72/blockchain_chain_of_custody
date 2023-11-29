@@ -344,4 +344,112 @@ function getItemHistory(uint32 _itemId) public view returns (BlockInfo[] memory)
             _ownerInfo
         );
     }
+    function getBlockCount() public view returns (uint256) {
+        return blockchain.length;
+    }
+
+    function verifyBlockchain() public view returns (string memory) {
+        uint256 blockCount = getBlockCount();
+
+        for (uint256 i = 1; i < blockCount; i++) {
+            if (blockchain[i].previousHash != getLatestBlockHash(i - 1)) {
+                return "ERROR";
+            }
+        }
+
+        return "CLEAN";
+    }
+
+    function getBadBlockInfo() public view returns (string memory, string memory, string memory) {
+        uint256 blockCount = getBlockCount();
+
+        for (uint256 i = 1; i < blockCount; i++) {
+            if (blockchain[i].previousHash != getLatestBlockHash(i - 1)) {
+                // Placeholder values for demonstration purposes
+                return (
+                    blockHashToString(blockchain[i].previousHash),
+                    blockHashToString(getLatestBlockHash(i - 1)),
+                    "PARENT_NOT_FOUND"
+                );
+            }
+
+            if (i > 1 && blockchain[i].previousHash == blockchain[i - 2].previousHash) {
+                // Placeholder values for demonstration purposes
+                return (
+                    blockHashToString(blockchain[i].previousHash),
+                    blockHashToString(blockchain[i - 2].previousHash),
+                    "DUPLICATE_PARENT"
+                );
+            }
+
+            bytes32 calculatedHash = calculateBlockHash(blockchain[i]);
+            if (blockchain[i].previousHash != calculatedHash) {
+                // Placeholder values for demonstration purposes
+                return (
+                    blockHashToString(blockchain[i].previousHash),
+                    blockHashToString(calculatedHash),
+                    "CONTENT_MISMATCH"
+                );
+            }
+
+            if (
+                keccak256(abi.encodePacked(blockchain[i].state)) ==
+                keccak256(abi.encodePacked("CHECKEDOUT")) &&
+                i < blockCount - 1
+            ) {
+                // Placeholder values for demonstration purposes
+                return (
+                    blockHashToString(blockchain[i].previousHash),
+                    blockHashToString(getLatestBlockHash(i)),
+                    "ITEM_CHECKED_OUT_OR_IN_AFTER_REMOVAL"
+                );
+            }
+        }
+
+        // Placeholder values for demonstration purposes
+        return ("", "", "");
+    }
+
+    // Other existing functions...
+    function bytesToHexString(bytes memory data) public pure returns (string memory) {
+        bytes memory hexString = new bytes(2 * data.length);
+
+        for (uint256 i = 0; i < data.length; i++) {
+            uint8 value = uint8(data[i]);
+            hexString[2 * i] = bytes1(uint8(value / 16 + 48));
+            hexString[2 * i + 1] = bytes1(uint8(value % 16 + 48));
+        }
+
+        return string(hexString);
+    }
+
+    // Utility function to convert bytes32 to string
+    function blockHashToString(bytes32 hash) internal pure returns (string memory) {
+        return bytesToHexString(abi.encodePacked(hash));
+    }
+
+    // Utility function to calculate the hash of a block
+    function calculateBlockHash(Block memory blockData) internal pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    blockData.previousHash,
+                    blockData.timestamp,
+                    blockData.caseId,
+                    blockData.evidenceItemId,
+                    blockData.state,
+                    blockData.handlerName,
+                    blockData.organizationName,
+                    blockData.dataLength,
+                    blockData.data
+                )
+            );
+    }
+
+    // Utility function to get the hash of the latest block
+    function getLatestBlockHash(uint256 index) internal view returns (bytes32) {
+        require(index < blockchain.length, "Index out of bounds");
+        return calculateBlockHash(blockchain[index]);
+    }
+
 }
