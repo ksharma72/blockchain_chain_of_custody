@@ -38388,12 +38388,12 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0x67a604B0CC1B3ef4A11a535A9a936144f7C480f0",
-      "transactionHash": "0x323d761b7bb0add6cdfb9ccdd1f4fa13c14d7869f01194240e0c572aaa51eb7b"
+      "address": "0x60d1eD5B56aB3ef68d470a30ee0bed5Be2762347",
+      "transactionHash": "0xf2d175d980141966f494850444e51d59def55e973b7fe7978520dc4663a1369e"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2023-11-29T00:20:24.703Z",
+  "updatedAt": "2023-11-29T00:45:42.462Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",
