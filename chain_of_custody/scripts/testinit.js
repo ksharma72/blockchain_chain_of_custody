@@ -40,7 +40,25 @@ async function isPortOpen(port) {
     });
 }
 
-async function checkForBlocks() {
+// Function to run Truffle migrate command
+async function runTruffleMigrate() {
+    return new Promise((resolve, reject) => {
+        console.log("Running Truffle migrate...");
+        const truffleMigrate = spawn('truffle', ['migrate', '--reset'], { shell: true });
+
+        truffleMigrate.on('exit', code => {
+            if (code === 0) {
+                console.log("Truffle migrate completed successfully.");
+                resolve();
+            } else {
+                console.error("Truffle migrate failed. Please check the Truffle logs for details.");
+                reject(new Error("Truffle migrate failed"));
+            }
+        });
+    });
+}
+
+async function createInitialBlock() {
     try {
         const contractAddress = getContractAddress();
 
@@ -51,53 +69,41 @@ async function checkForBlocks() {
             console.log("Ganache not running. Starting Ganache...");
 
             // Start Ganache in a new terminal window
-            spawn('ganache-cli', ['-p', '7545', '-i', '5777'], { shell: true, detached: true });
+            const ganacheProcess = spawn('ganache-cli', ['-p', '7545', '-i', '5777'], { shell: true, detached: true });
 
             // Wait for Ganache to start (you might need to adjust the delay based on your system)
             await new Promise(resolve => setTimeout(resolve, 5000));
 
             console.log("Ganache started successfully.");
 
-            // Run Truffle migrate command
-            console.log("Running Truffle migrate...");
-            const truffleMigrate = spawn('truffle', ['migrate', '--reset'], { shell: true });
-            truffleMigrate.on('exit', code => {
-                if (code === 0) {
-                    console.log("Truffle migrate completed successfully.");
-                } else {
-                    console.error("Truffle migrate failed. Please check the Truffle logs for details.");
-                }
-            });
-        }
+            const newContractInstance = await ChainOfCustody.at(contractAddress);
 
-        const newContractInstance = await ChainOfCustody.at(contractAddress);
+            const numberOfBlocks = await newContractInstance.getBlockCount();
 
-        const numberOfBlocks = await newContractInstance.getBlockCount();
-
-        if (numberOfBlocks === 0) {
-            console.log("No existing blocks found. Creating INITIAL block.");
-
-            // Assuming 'addEvidenceItems' function updates the state and creates a new block in the blockchain
-            const initialData = ["Initial data for the genesis block"];
-            const itemIds = [1]; // Assuming the item ID for the initial block is 1
-
-            // Set the "from" field with the default account
-            const options = { from: web3.eth.defaultAccount };
-
-            try {
-                await newContractInstance.addEvidenceItems(1, itemIds, 'HandlerName', 'OrganizationName', options);
-                console.log("INITIAL block created successfully.");
-            } catch (error) {
-                console.error("Error creating the INITIAL block:", error);
+            if (numberOfBlocks === 0) {
+                // Run Truffle migrate command only if no blocks are present
+                await runTruffleMigrate();
+            } else {
+                console.log("Blockchain file found with blocks.");
             }
 
-            console.log("INITIAL block created.");
+            // Kill Ganache process
+            ganacheProcess.kill();
         } else {
-            console.log("Blockchain file found with INITIAL block.");
+            const newContractInstance = await ChainOfCustody.at(contractAddress);
+
+            const numberOfBlocks = await newContractInstance.getBlockCount();
+
+            if (numberOfBlocks === 0) {
+                // Run Truffle migrate command only if no blocks are present
+                await runTruffleMigrate();
+            } else {
+                console.log("Blockchain file found with blocks.");
+            }
         }
     } catch (error) {
-        console.error("Error checking for blocks:", error);
+        console.error("Error during blockchain initialization:", error);
     }
 }
 
-checkForBlocks();
+createInitialBlock();
