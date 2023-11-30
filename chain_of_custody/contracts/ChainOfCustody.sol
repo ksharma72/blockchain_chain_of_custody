@@ -19,6 +19,24 @@ contract ChainOfCustody {
     Block[] public blockchain;
     mapping(uint32 => bool) public evidenceExists;
 
+    function getLatestBlockHash() public view returns (bytes32) {
+        Block storage lastBlock = blockchain[blockchain.length - 1];
+        return
+            keccak256(
+                abi.encodePacked(
+                    lastBlock.previousHash,
+                    lastBlock.timestamp,
+                    lastBlock.caseId,
+                    lastBlock.evidenceItemId,
+                    lastBlock.state,
+                    lastBlock.handlerName,
+                    lastBlock.organizationName,
+                    lastBlock.dataLength,
+                    lastBlock.data
+                )
+            );
+    }
+
     // Updated event to use strings
     event EvidenceItemAdded(
         uint128 indexed caseId,
@@ -36,10 +54,17 @@ contract ChainOfCustody {
         string memory _handlerName,
         string memory _organizationName
     ) public {
+        Block storage lastBlock = blockchain[blockchain.length - 1];
         for (uint i = 0; i < _itemIds.length; i++) {
+            
             require(
                 !evidenceExists[_itemIds[i]],
                 "Evidence item ID must be unique"
+            );
+            require(
+                keccak256(abi.encodePacked(lastBlock.state)) !=
+                    keccak256(abi.encodePacked("RELEASED")),
+                "Error: Cannot check out a removed item."
             );
             addBlock(
                 _caseId,
@@ -96,24 +121,6 @@ contract ChainOfCustody {
         );
     }
 
-    function getLatestBlockHash() public view returns (bytes32) {
-        Block storage lastBlock = blockchain[blockchain.length - 1];
-        return
-            keccak256(
-                abi.encodePacked(
-                    lastBlock.previousHash,
-                    lastBlock.timestamp,
-                    lastBlock.caseId,
-                    lastBlock.evidenceItemId,
-                    lastBlock.state,
-                    lastBlock.handlerName,
-                    lastBlock.organizationName,
-                    lastBlock.dataLength,
-                    lastBlock.data
-                )
-            );
-    }
-
     event EvidenceItemCheckedOut(
         uint128 indexed caseId,
         uint32 indexed evidenceItemId,
@@ -144,7 +151,7 @@ contract ChainOfCustody {
         );
         require(
             keccak256(abi.encodePacked(lastBlock.state)) !=
-                keccak256(abi.encodePacked("REMOVED")),
+                keccak256(abi.encodePacked("RELEASED")),
             "Error: Cannot check out a removed item."
         );
 
@@ -344,7 +351,7 @@ contract ChainOfCustody {
         addBlock(
             lastBlock.caseId,
             _evidenceItemId,
-            "REMOVED",
+            "RELEASED",
             _reason, // Include _reason in the call
             lastBlock.handlerName,
             lastBlock.organizationName,
@@ -355,7 +362,7 @@ contract ChainOfCustody {
             lastBlock.caseId,
             _evidenceItemId,
             uint64(block.timestamp),
-            "REMOVED",
+            "RELEASED",
             _reason,
             _ownerInfo
         );
