@@ -61,7 +61,7 @@ contract ChainOfCustody {
         string memory _organizationName,
         string memory _reason,
         bytes memory _data
-    ) private {
+    ) internal {
         bytes32 previousHash = blockchain.length > 0
             ? getLatestBlockHash()
             : bytes32(0);
@@ -94,7 +94,7 @@ contract ChainOfCustody {
         );
     }
 
-    function getLatestBlockHash() private view returns (bytes32) {
+    function getLatestBlockHash() public view returns (bytes32) {
         Block storage lastBlock = blockchain[blockchain.length - 1];
         return
             keccak256(

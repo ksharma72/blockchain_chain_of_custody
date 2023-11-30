@@ -120,9 +120,10 @@ def show_items(case_id):
 def init_blockchain():
     try:
         result = subprocess.run(
-            ["node", f"{SCRIPTS_PATH}/init.js"],
+            ["node", f"{SCRIPTS_PATH}/testinit.js"],
             capture_output=True, text=True, check=True
         )
+        #print(result)
         print(result.stdout)
     except subprocess.CalledProcessError as e:
         print(f"Error during blockchain initialization: {e.stderr}", file=sys.stderr)
@@ -200,6 +201,7 @@ verify_parser.set_defaults(func=lambda args: verify_blockchain())
 
 
 def main():
+
     args = parser.parse_args()
 
     if args.command == 'add':
