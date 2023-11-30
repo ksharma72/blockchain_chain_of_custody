@@ -120,7 +120,7 @@ def show_items(case_id):
 def init_blockchain():
     try:
         result = subprocess.run(
-            ["node", f"{SCRIPTS_PATH}/testinit.js"],
+            ["node", f"{SCRIPTS_PATH}/init.js"],
             capture_output=True, text=True, check=True
         )
         #print(result)
