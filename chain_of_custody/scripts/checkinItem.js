@@ -21,27 +21,34 @@ async function checkinEvidenceItem(evidenceItemId, handlerName, organizationName
     const account = accounts[0];
 
     try {
-        let result = await contract.methods.checkinEvidenceItem(evidenceItemId, handlerName, organizationName).send({ from: account, gas: 5000000 });
+        let result = await contract.methods.checkinEvidenceItem(evidenceItemId, handlerName, organizationName).send({ from: account, gas: 6000000 });
         let receipt = await web3.eth.getTransactionReceipt(result.transactionHash);
 
         if (receipt && receipt.logs) {
-            receipt.logs.forEach((log) => {
-                let event = web3.eth.abi.decodeLog([
-                    { type: 'uint128', name: 'caseId', indexed: true },
-                    { type: 'uint32', name: 'evidenceItemId', indexed: true },
-                    { type: 'uint64', name: 'timestamp' },
-                    { type: 'string', name: 'state' },
-                    { type: 'string', name: 'handlerName' },
-                    { type: 'string', name: 'organizationName' }
-                ], log.data, log.topics.slice(1));
+            const eventSignature = web3.utils.sha3('EvidenceItemCheckedIn(uint128,uint32,uint64,string,string,string)');
 
-                console.log(`Checked in item: ${evidenceItemId}`);
-                console.log(`Case ID: ${event.caseId}`);
-                console.log(`Status: ${event.state}`);
-                console.log(`Handler Name: ${event.handlerName}`);
-                console.log(`Organization Name: ${event.organizationName}`);
-                console.log(`Time of action: ${new Date(event.timestamp * 1000).toISOString()}`);
+            receipt.logs.forEach((log) => {
+                if (log.topics[0] === eventSignature) {
+                    let event = web3.eth.abi.decodeLog([
+                        { indexed: true, name: 'caseId', type: 'uint128' },
+                        { indexed: true, name: 'evidenceItemId', type: 'uint32' },
+                        { indexed: false, name: 'timestamp', type: 'uint64' },
+                        { indexed: false, name: 'state', type: 'string' },
+                        { indexed: false, name: 'handlerName', type: 'string' },
+                        { indexed: false, name: 'organizationName', type: 'string' }
+                    ], log.data, log.topics.slice(1));
+            
+                    console.log(`Checked in item: ${evidenceItemId}`);
+                    console.log(`Case ID: ${event.caseId}`);
+                    console.log(`Status: ${event.state}`);
+                    //console.log(`Handler Name: ${event.handlerName}`);
+                    //console.log(`Organization Name: ${event.organizationName}`);
+                    console.log(`Time of action: ${new Date(event.timestamp * 1000).toISOString()}`);
+                }
             });
+            
+        } else {
+            console.error('Transaction failed');
         }
     } catch (error) {
         console.error('Error during checkin:', error.message);

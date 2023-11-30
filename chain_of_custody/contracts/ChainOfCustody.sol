@@ -20,8 +20,8 @@ contract ChainOfCustody {
 
     // Updated event to use strings
     event EvidenceItemAdded(
-        uint128 caseId,
-        uint32 evidenceItemId,
+        uint128 indexed caseId,
+        uint32 indexed evidenceItemId,
         uint64 timestamp,
         string state,
         string handlerName,
@@ -113,13 +113,15 @@ contract ChainOfCustody {
     }
 
     event EvidenceItemCheckedOut(
-        uint128 caseId,
-        uint32 evidenceItemId,
+        uint128 indexed caseId,
+        uint32 indexed evidenceItemId,
+        string handlerName,
+        string organizationName,
         uint64 timestamp,
-        bytes12 state
+        string state
     );
 
-    function checkoutEvidenceItem(uint32 _evidenceItemId) public {
+    function checkoutEvidenceItem(uint32 _evidenceItemId, string memory _handlerName, string memory _organizationName) public {
         require(
             evidenceExists[_evidenceItemId],
             "Error: Evidence item does not exist."
@@ -148,58 +150,71 @@ contract ChainOfCustody {
         emit EvidenceItemCheckedOut(
             lastBlock.caseId,
             _evidenceItemId,
+            _handlerName,
+            _organizationName,
             uint64(block.timestamp),
             "CHECKEDOUT"
         );
     }
 
     event EvidenceItemCheckedIn(
-        uint128 caseId,
-        uint32 evidenceItemId,
+        uint128 indexed caseId,
+        uint32 indexed evidenceItemId,
         uint64 timestamp,
-        bytes12 state,
+        string state,
         string handlerName,
         string organizationName
     );
 
     function checkinEvidenceItem(
-        uint32 _evidenceItemId,
-        string memory _handlerName,
-        string memory _organizationName,
-        string memory _reason
-    ) public {
-        require(
-            evidenceExists[_evidenceItemId],
-            "Error: Evidence item does not exist."
-        );
+    uint32 _evidenceItemId,
+    string memory _handlerName,
+    string memory _organizationName
+) public {
+    require(
+        evidenceExists[_evidenceItemId],
+        "Error: Evidence item does not exist."
+    );
 
-        // Check if the item is not already checked in
-        Block storage lastBlock = blockchain[blockchain.length - 1];
-        require(
-            keccak256(abi.encodePacked(lastBlock.state)) !=
-                keccak256(abi.encodePacked("CHECKEDIN")),
-            "Error: Cannot check out a checked out item. Must check it in first."
-        );
+    bool isItemCheckedOut = false;
+    uint128 caseIdForItem;
 
-        // Add a new block for checkin
-        addBlock(
-            lastBlock.caseId,
-            _evidenceItemId,
-            "CHECKEDIN",
-            _handlerName,
-            _organizationName,
-            _reason,
-            lastBlock.data
-        );
-        emit EvidenceItemCheckedIn(
-            lastBlock.caseId,
-            _evidenceItemId,
-            uint64(block.timestamp),
-            "CHECKEDIN",
-            _handlerName,
-            _organizationName
-        );
+    // Iterate through the blockchain to find the specific block with the evidence item
+    for (uint i = blockchain.length; i > 0; i--) {
+        Block storage blockItem = blockchain[i - 1];
+        if (blockItem.evidenceItemId == _evidenceItemId) {
+            // Check if the item is in a checked out state
+            if (keccak256(abi.encodePacked(blockItem.state)) == keccak256(abi.encodePacked("CHECKEDOUT"))) {
+                isItemCheckedOut = true;
+                caseIdForItem = blockItem.caseId;
+                break;
+            }
+        }
     }
+
+    require(isItemCheckedOut, "Error: Item is not checked out.");
+
+    // Add a new block for checkin
+    addBlock(
+        caseIdForItem,
+        _evidenceItemId,
+        "CHECKEDIN",
+        _handlerName,
+        _organizationName,
+        "",
+        ""
+    );
+
+    emit EvidenceItemCheckedIn(
+        caseIdForItem,
+        _evidenceItemId,
+        uint64(block.timestamp),
+        "CHECKEDIN",
+        _handlerName,
+        _organizationName
+    );
+}
+
 
     function getCases() public view returns (uint128[] memory) {
         uint128[] memory cases = new uint128[](blockchain.length);
@@ -251,36 +266,38 @@ contract ChainOfCustody {
     }
 
     struct BlockInfo {
-        uint64 timestamp;
-        string handlerName;
-        string state;
+    uint128 caseId;
+    uint32 evidenceItemId;
+    uint64 timestamp;
+    string state;
+    string handlerName;
+}
+
+function getItemHistory(uint32 _itemId) public view returns (BlockInfo[] memory) {
+    BlockInfo[] memory history = new BlockInfo[](blockchain.length);
+    uint count = 0;
+
+    for (uint i = 0; i < blockchain.length; i++) {
+        if (blockchain[i].evidenceItemId == _itemId) {
+            history[count] = BlockInfo(
+                blockchain[i].caseId,
+                blockchain[i].evidenceItemId,
+                blockchain[i].timestamp,
+                blockchain[i].state,
+                blockchain[i].handlerName
+            );
+            count++;
+        }
     }
 
-    function getItemHistory(
-        uint32 _itemId
-    ) public view returns (BlockInfo[] memory) {
-        BlockInfo[] memory history = new BlockInfo[](blockchain.length);
-        uint count = 0;
-
-        for (uint i = 0; i < blockchain.length; i++) {
-            if (blockchain[i].evidenceItemId == _itemId) {
-                history[count] = BlockInfo(
-                    blockchain[i].timestamp,
-                    blockchain[i].handlerName,
-                    blockchain[i].state
-                );
-                count++;
-            }
-        }
-
-        // Resize the array to fit the actual number of entries for the item
-        BlockInfo[] memory itemHistory = new BlockInfo[](count);
-        for (uint i = 0; i < count; i++) {
-            itemHistory[i] = history[i];
-        }
-
-        return itemHistory;
+    BlockInfo[] memory itemHistory = new BlockInfo[](count);
+    for (uint i = 0; i < count; i++) {
+        itemHistory[i] = history[i];
     }
+
+    return itemHistory;
+}
+
 
     event EvidenceItemRemoved(
         uint128 caseId,
@@ -327,6 +344,7 @@ contract ChainOfCustody {
             _ownerInfo
         );
     }
+<<<<<<< HEAD
     // Part of verify: fetches the entire blockchain
     function getBlockchain() public view returns (Block[] memory) {
         return blockchain;
@@ -352,5 +370,115 @@ contract ChainOfCustody {
         }
     }
     return false;
+=======
+    function getBlockCount() public view returns (uint256) {
+        return blockchain.length;
+    }
+
+    function verifyBlockchain() public view returns (string memory) {
+        uint256 blockCount = getBlockCount();
+
+        for (uint256 i = 1; i < blockCount; i++) {
+            if (blockchain[i].previousHash != getLatestBlockHash(i - 1)) {
+                return "ERROR";
+            }
+        }
+
+        return "CLEAN";
+    }
+
+    function getBadBlockInfo() public view returns (string memory, string memory, string memory) {
+        uint256 blockCount = getBlockCount();
+
+        for (uint256 i = 1; i < blockCount; i++) {
+            if (blockchain[i].previousHash != getLatestBlockHash(i - 1)) {
+                // Placeholder values for demonstration purposes
+                return (
+                    blockHashToString(blockchain[i].previousHash),
+                    blockHashToString(getLatestBlockHash(i - 1)),
+                    "PARENT_NOT_FOUND"
+                );
+            }
+
+            if (i > 1 && blockchain[i].previousHash == blockchain[i - 2].previousHash) {
+                // Placeholder values for demonstration purposes
+                return (
+                    blockHashToString(blockchain[i].previousHash),
+                    blockHashToString(blockchain[i - 2].previousHash),
+                    "DUPLICATE_PARENT"
+                );
+            }
+
+            bytes32 calculatedHash = calculateBlockHash(blockchain[i]);
+            if (blockchain[i].previousHash != calculatedHash) {
+                // Placeholder values for demonstration purposes
+                return (
+                    blockHashToString(blockchain[i].previousHash),
+                    blockHashToString(calculatedHash),
+                    "CONTENT_MISMATCH"
+                );
+            }
+
+            if (
+                keccak256(abi.encodePacked(blockchain[i].state)) ==
+                keccak256(abi.encodePacked("CHECKEDOUT")) &&
+                i < blockCount - 1
+            ) {
+                // Placeholder values for demonstration purposes
+                return (
+                    blockHashToString(blockchain[i].previousHash),
+                    blockHashToString(getLatestBlockHash(i)),
+                    "ITEM_CHECKED_OUT_OR_IN_AFTER_REMOVAL"
+                );
+            }
+        }
+
+        // Placeholder values for demonstration purposes
+        return ("", "", "");
+    }
+
+    // Other existing functions...
+    function bytesToHexString(bytes memory data) public pure returns (string memory) {
+        bytes memory hexString = new bytes(2 * data.length);
+
+        for (uint256 i = 0; i < data.length; i++) {
+            uint8 value = uint8(data[i]);
+            hexString[2 * i] = bytes1(uint8(value / 16 + 48));
+            hexString[2 * i + 1] = bytes1(uint8(value % 16 + 48));
+        }
+
+        return string(hexString);
+    }
+
+    // Utility function to convert bytes32 to string
+    function blockHashToString(bytes32 hash) internal pure returns (string memory) {
+        return bytesToHexString(abi.encodePacked(hash));
+    }
+
+    // Utility function to calculate the hash of a block
+    function calculateBlockHash(Block memory blockData) internal pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    blockData.previousHash,
+                    blockData.timestamp,
+                    blockData.caseId,
+                    blockData.evidenceItemId,
+                    blockData.state,
+                    blockData.handlerName,
+                    blockData.organizationName,
+                    blockData.dataLength,
+                    blockData.data
+                )
+            );
+    }
+
+    // Utility function to get the hash of the latest block
+    function getLatestBlockHash(uint256 index) internal view returns (bytes32) {
+        require(index < blockchain.length, "Index out of bounds");
+        return calculateBlockHash(blockchain[index]);
+    }
+
+>>>>>>> 70e04fe5a7f85ecb76277e3bcbaebf1a88493edf
 }
 }

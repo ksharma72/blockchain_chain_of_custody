@@ -106,7 +106,7 @@ def show_items(case_id):
     """
     try:
         result = subprocess.run(
-            ["node", f"{SCRIPTS_PATH}/showItemsForCase.js", case_id],
+            ["node", f"{SCRIPTS_PATH}/showItemsforCase.js", case_id],
             capture_output=True, text=True, check=True
         )
         if result.stdout:
@@ -117,6 +117,28 @@ def show_items(case_id):
         print(f"Error during show items: {e.stderr}", file=sys.stderr)
         sys.exit(e.returncode)
 
+def init_blockchain():
+    try:
+        result = subprocess.run(
+            ["node", f"{SCRIPTS_PATH}/init.js"],
+            capture_output=True, text=True, check=True
+        )
+        print(result.stdout)
+    except subprocess.CalledProcessError as e:
+        print(f"Error during blockchain initialization: {e.stderr}", file=sys.stderr)
+        sys.exit(e.returncode)
+
+# New function for blockchain verification
+def verify_blockchain():
+    try:
+        result = subprocess.run(
+            ["node", f"{SCRIPTS_PATH}/verify.js"],
+            capture_output=True, text=True, check=True
+        )
+        print(result.stdout)
+    except subprocess.CalledProcessError as e:
+        print(f"Error during blockchain verification: {e.stderr}", file=sys.stderr)
+        sys.exit(e.returncode)
 
 # Argument parser setup
 parser = argparse.ArgumentParser(description="Blockchain Chain of Custody Management Tool")
@@ -155,6 +177,11 @@ show_history_parser = show_subparsers.add_parser('history', help='Show history o
 show_history_parser.add_argument('-i', '--item_id', required=True, help='Item ID')
 show_history_parser.set_defaults(func=lambda args: show_item_history(args.item_id))
 
+# Add command parser for 'show items'
+show_items_parser = show_subparsers.add_parser('items', help='Show item IDs for a given case')
+show_items_parser.add_argument('-c', '--case_id', required=True, dest='case_id', help='Case ID')
+show_items_parser.set_defaults(func=lambda args: show_items(args.case_id))
+
 
 # Remove command parser
 remove_parser = subparsers.add_parser('remove', help='Remove an evidence item from a case')
@@ -162,10 +189,14 @@ remove_parser.add_argument('-i', '--item_id', required=True, help='Item ID')
 remove_parser.add_argument('-r', '--reason', required=True, help='Reason for removal')
 remove_parser.add_argument('-o', '--owner_info', required=True, help='Owner information')
 
-# Add command parser for 'show items'
-show_items_parser = subparsers.add_parser('items', help='Show item IDs for a given case')
-show_items_parser.add_argument('-c', '--case_id', required=True, help='Case ID')
-show_items_parser.set_defaults(func=lambda args: show_items(args.case_id))
+# Add command parser for 'init'
+init_parser = subparsers.add_parser('init', help='Initialize the blockchain')
+init_parser.set_defaults(func=lambda args: init_blockchain())
+
+# Add command parser for 'verify'
+verify_parser = subparsers.add_parser('verify', help='Verify the blockchain')
+verify_parser.set_defaults(func=lambda args: verify_blockchain())
+
 
 
 def main():
@@ -179,6 +210,10 @@ def main():
         checkin_evidence_item(args.item_id, args.handler, args.organization)
     elif args.command == 'remove':
         remove_evidence(args.item_id, args.reason, args.owner_info)
+    elif args.command == 'init':
+        init_blockchain()
+    elif args.command == 'verify':
+        verify_blockchain()
     elif args.command == 'show':
         if hasattr(args, 'show_command'):
             if args.show_command == 'cases':
