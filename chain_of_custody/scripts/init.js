@@ -1,45 +1,67 @@
-const fs = require('fs'); // Added to include the 'fs' module for file system operations
-const { execSync } = require('child_process'); // Added to include the 'execSync' function
+const fs = require('fs');
 const Contract = require('truffle-contract');
 const Web3 = require('web3');
-const ChainOfCustodyArtifact = require('../build/contracts/ChainOfCustody.json'); // Adjust the path accordingly
+const ChainOfCustodyArtifact = require('../build/contracts/ChainOfCustody.json');
 
 const ChainOfCustody = Contract(ChainOfCustodyArtifact);
-const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545')); // Update with your Ethereum node URL
+const web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545')); // Update with your Ganache HTTP provider URL
 
 ChainOfCustody.setProvider(web3.currentProvider);
 
-async function init() {
+// Function to get the contract address
+function getContractAddress() {
+    // Assuming you are using Ganache, which typically uses network ID '5777'
+    const networkId = '5777';
+    const contractData = ChainOfCustodyArtifact.networks[networkId];
+
+    if (!contractData || !contractData.address) {
+        console.error("Contract not deployed on the current network (network ID: " + networkId + ")");
+        process.exit(1);
+    }
+
+    return contractData.address;
+}
+
+async function checkForBlocks() {
     try {
-        console.log("Script started.");
+        const contractAddress = getContractAddress();
+        const contractInstance = await ChainOfCustody.at(contractAddress);
 
-        // Check if the blockchain file exists
-        const blockchainFileExists = fs.existsSync('ChainOfCustody.json'); // Adjusted file name to match the import
+        const numberOfBlocks = await contractInstance.getBlockCount();
 
-        if (!blockchainFileExists) {
-            console.log("Blockchain file not found. Creating INITIAL block.");
+        if (numberOfBlocks === 0) {
+            console.log("No existing blocks found. Creating INITIAL block.");
 
-            // Run Truffle migration
-            execSync('truffle migrate');
+            // Start Ganache with the specified port and network id
+            console.log("Starting Ganache...");
+            require('child_process').spawnSync('ganache-cli', ['-p', '7545', '-i', '5777']);
 
-            console.log("Truffle migration complete.");
+            // Wait for Ganache to start (you might need to adjust the delay based on your system)
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Load the contract instance using the dynamically extracted contract address
+            const newContractAddress = getContractAddress(); // You can reuse the function
+            const newContractInstance = await ChainOfCustody.at(newContractAddress);
 
             // Additional initialization logic for creating the initial block
-            const contractInstance = await ChainOfCustody.deployed();
-            const initialData = "Initial data for the genesis block";
+            const initialData = ["Initial data for the genesis block"];
+            const itemIds = [1]; // Assuming the item ID for the initial block is 1
 
-            // You may have a function in your smart contract to add the initial block
-            await contractInstance.addBlock(initialData);
+            // Set the "from" field with the default account
+            const options = { from: web3.eth.defaultAccount };
 
-            console.log("INITIAL block created.");
+            // Assuming 'addEvidenceItems' function updates the state and creates a new block in the blockchain
+            await newContractInstance.addEvidenceItems(1, itemIds, 'HandlerName', 'OrganizationName', options);
+
+            console.log(`INITIAL block created. Contract address: ${newContractAddress}`);
         } else {
-            console.log("Blockchain file found.");
+            console.log("Blockchain file found with INITIAL block.");
         }
 
-        console.log("Script completed.");
+        //console.log("Script completed.");
     } catch (error) {
-        console.error("Error during initialization:", error);
+        console.error("Error checking for blocks:", error);
     }
 }
 
-init();
+checkForBlocks();
