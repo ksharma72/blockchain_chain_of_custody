@@ -87,7 +87,7 @@ contract ChainOfCustody {
         string memory _organizationName,
         string memory _reason,
         bytes memory _data
-    ) internal {
+    ) public {
         bytes32 previousHash = blockchain.length > 0
             ? getLatestBlockHash()
             : bytes32(0);
