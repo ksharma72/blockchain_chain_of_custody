@@ -1,7 +1,6 @@
 const Web3 = require('web3');
 const contractABI = require('../build/contracts/ChainOfCustody.json');
 
-// Assuming you are using Ganache, which typically uses network ID '5777'
 const networkId = '5777';
 const contractData = contractABI.networks[networkId];
 

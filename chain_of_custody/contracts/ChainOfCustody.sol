@@ -47,7 +47,7 @@ contract ChainOfCustody {
         string organizationName
     );
 
-    // Updated function to accept string parameters
+    
     function addEvidenceItems(
         uint128 _caseId,
         uint32[] memory _itemIds,
@@ -78,7 +78,7 @@ contract ChainOfCustody {
         }
     }
 
-    // Updated function to accept string parameters
+    
     function addBlock(
         uint128 _caseId,
         uint32 _evidenceItemId,
@@ -155,7 +155,7 @@ contract ChainOfCustody {
             "Error: Cannot check out a removed item."
         );
 
-        // Assuming 'addBlock' function updates the state and creates a new block in the blockchain
+        
         addBlock(
             lastBlock.caseId,
             _evidenceItemId,
@@ -347,12 +347,12 @@ contract ChainOfCustody {
             "Error: Item must be checked in to be removed."
         );
 
-        // Assuming 'addBlock' function updates the state and creates a new block in the blockchain
+        
         addBlock(
             lastBlock.caseId,
             _evidenceItemId,
             "RELEASED",
-            _reason, // Include _reason in the call
+            _reason, 
             lastBlock.handlerName,
             lastBlock.organizationName,
             bytes(_ownerInfo)
@@ -405,7 +405,7 @@ contract ChainOfCustody {
                 i > 1 &&
                 blockchain[i].previousHash == blockchain[i - 2].previousHash
             ) {
-                // Placeholder values for demonstration purposes
+                
                 return (
                     blockHashToString(blockchain[i].previousHash),
                     blockHashToString(blockchain[i - 2].previousHash),
@@ -415,7 +415,7 @@ contract ChainOfCustody {
 
             bytes32 calculatedHash = calculateBlockHash(blockchain[i]);
             if (blockchain[i].previousHash != calculatedHash) {
-                // Placeholder values for demonstration purposes
+                
                 return (
                     blockHashToString(blockchain[i].previousHash),
                     blockHashToString(calculatedHash),
@@ -428,7 +428,7 @@ contract ChainOfCustody {
                 keccak256(abi.encodePacked("CHECKEDOUT")) &&
                 i < blockCount - 1
             ) {
-                // Placeholder values for demonstration purposes
+                
                 return (
                     blockHashToString(blockchain[i].previousHash),
                     blockHashToString(getLatestBlockHash(i)),
@@ -437,11 +437,11 @@ contract ChainOfCustody {
             }
         }
 
-        // Placeholder values for demonstration purposes
+        
         return ("", "", "");
     }
 
-    // Other existing functions...
+    
     function bytesToHexString(
         bytes memory data
     ) public pure returns (string memory) {
