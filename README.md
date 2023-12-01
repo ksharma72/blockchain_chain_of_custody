@@ -7,7 +7,7 @@ Saketh Angirekula (ASU ID: 1230402773),
 Stephanie Blossom (ASU ID: 1218718696).
 
 
-This project implements a blockchain-based chain of custody system. Follow the instructions below to set up and interact with the system.
+This project implements an Ethereum blockchain-based chain of custody system. Follow the instructions below to set up and interact with the system.
 
 ## How to Test/Run
 
