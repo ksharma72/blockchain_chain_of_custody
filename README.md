@@ -4,7 +4,7 @@ Project Contributors:
 
 Kanishk Sharma (ASU ID: 1226213666),
 Saketh Angirekula (ASU ID: 1230402773),
-Stephanie Blossom (ASU ID: ).
+Stephanie Blossom (ASU ID: 1218718696).
 
 
 This project implements a blockchain-based chain of custody system. Follow the instructions below to set up and interact with the system.
